@@ -61,7 +61,7 @@ function fd_class:read(n)
 	if cursor >= #data then return nil end -- [N2]
 	n=math_floor(n) -- must use integer [N1]
 	local v = string_sub(data, 1+cursor, cursor+n)
-	_[1] = cursor+n
+	_[1] = cursor+#v
 	return v
 end
 
@@ -83,7 +83,7 @@ function fd_class:seek(whence, offset)
 	elseif whence == "cur" then
 		cursor = cursor + offset
 	elseif whence == "end" then
-		cursor = _.size
+		cursor = _.size + offset
 	end
 	if not( cursor <= _.size+1) then
 		print("FIXME: raise an out of range error ?")
