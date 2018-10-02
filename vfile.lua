@@ -84,12 +84,31 @@ function fd_class:seek(whence, offset)
 		cursor = cursor + offset
 	elseif whence == "end" then
 		cursor = _.size + offset
+		-- FIXME: limit max end ?
 	end
 	if not( cursor <= _.size+1) then
 		print("FIXME: raise an out of range error ?")
 	end
 	_[1] = cursor
 	return cursor
+end
+
+function fd_class:write(a1, ...)
+	assert(...==nil, "multiple argument not-implemented-yet")
+	if type(a1)=="number" then
+		error("number argument is not-implemented-yet",2)
+	end
+	assert(type(a1)=="string", "invalid type argument#1")
+	local wlen = #a1
+	local _ = self._
+	local cursor = _[1] or 0
+	local data = _[0]
+	local newdata = string_sub(data, 1,1+cursor-1)..a1..string_sub(data, 1+cursor+wlen, -1)
+	local size = #newdata
+	cursor = cursor + wlen
+	_[0] = newdata
+	_[1] = cursor
+	_.size = size
 end
 
 -- $ lua -e 'print(io.stdout:seek("cur", 0))'

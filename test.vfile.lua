@@ -60,5 +60,14 @@ do
 		assert(not pcall(function() z:close() end))
 	end
 
+	local z = vfile("aaabbbccc\nzzz")
+		--       hello
+	z:write("hello\n")
+	z:seek("set")
+	assert(z:read("*a")=="hello\nccc\nzzz")
+	z:seek("set")
+	assert(z:read(6)=="hello\n")
+	assert(z:read("*l")=="ccc")
+	assert(z:read("*l")=="zzz")
 	print("ok")
 end
