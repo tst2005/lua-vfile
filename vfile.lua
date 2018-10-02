@@ -4,6 +4,7 @@ local class = require "mini.class.pico"
 local fd_class = class()
 
 local math_floor = assert(math.floor)
+local math_max = math.max
 local string_sub, string_find = assert(string.sub), assert(string.find)
 
 local internal = "_"
@@ -93,8 +94,9 @@ function fd_class:seek(whence, offset)
 	return cursor
 end
 
+
+
 function fd_class:write(a1, ...)
-	assert(...==nil, "multiple argument not-implemented-yet")
 	if type(a1)=="number" then
 		error("number argument is not-implemented-yet",2)
 	end
@@ -104,11 +106,16 @@ function fd_class:write(a1, ...)
 	local cursor = _[1] or 0
 	local data = _[0]
 	local newdata = string_sub(data, 1,1+cursor-1)..a1..string_sub(data, 1+cursor+wlen, -1)
-	local size = #newdata
+	local size = math_max(#newdata, _.size)
 	cursor = cursor + wlen
 	_[0] = newdata
 	_[1] = cursor
 	_.size = size
+	if ... then
+		for _i,a in ipairs{...} do
+			self:write(a)
+		end
+	end
 end
 
 -- $ lua -e 'print(io.stdout:seek("cur", 0))'

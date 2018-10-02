@@ -69,5 +69,13 @@ do
 	assert(z:read(6)=="hello\n")
 	assert(z:read("*l")=="ccc")
 	assert(z:read("*l")=="zzz")
+
+	z:seek("set")
+	z:write("AAA", "BBB", "CCC")
+	z:seek("cur", 1)
+	z:write("Z")
+	z:seek("set")
+	assert(z:read("*a") == "AAABBBCCC\nZzz")
+
 	print("ok")
 end
