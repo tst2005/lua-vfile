@@ -15,12 +15,28 @@ do
 	--local fd = io.stdin
 	for _, fd in ipairs{y, x} do
 --print("test with fd", fd)
+		assert( fd:seek("cur", 0) == 0 )
+
 		assert(fd:read(1)=="a")
 		assert(fd:read(2)=="bc")
 		assert(fd:read(0)=="")
 		assert(fd:read(3)=="de\n")
 		assert(fd:read(3)=="z")
+
+		assert(fd:seek("cur", 0) == #data )
+
 		assert(fd:read(1)==nil)
+
+		assert( fd:seek("cur",  0) == #data )
+		assert( fd:seek("end",  0) == #data )
+		assert( fd:seek("end", -1) == #data-1)
+		assert( fd:seek("cur",  0) == #data-1)
+		assert( fd:seek("cur",  1) == #data)
+		assert( fd:seek("set", 0) == 0 )
+		assert( fd:seek("set"   ) == 0 )
+
+		assert( fd:seek("cur", 1) == 1)
+
 --print("pass")
 	end
 
@@ -36,20 +52,6 @@ do
 	assert(z:read("*L")=="Bb\n")
 	assert(z:read("*L")=="\n")
 	assert(z:read("*L")=="ccc")
-
-	if z.seek then
-		print( z:seek("cur", 0) )
-
-		print( z:seek("end", 0) )
-
-		print( z:seek("end", -1))
-		print( z:seek("cur", 1))
-
-		assert( z:seek("set", 0) == 0 )
-		assert( z:seek("set") == 0 )
-
-		print( z:seek("cur", 1) )
-	end
 
 	if z.close then
 		assert(tostring(z):find("^file %(0x[0-9a-fA-F]+%)$"))
