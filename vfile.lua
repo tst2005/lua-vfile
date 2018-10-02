@@ -23,7 +23,7 @@ function fd_class:init(data)
 	local zerox = tostring(self):match(": (0x.*)$")
 	self[internal] = {
 		[0]=data,	-- data
-		[1]=1,		-- cursor (read at datasub(cursor,cursor+len) )
+		[1]=0,		-- cursor (read at datasub(1+cursor,1+cursor+len) )
 		[2]=zerox,	-- 0xffffffff
 		opened = true,
 		size = #data,
@@ -43,26 +43,24 @@ function fd_class:read(n)
 	local data = _[0]
 	local cursor = _[1]
 	assert(n=="*a" or n=="*l" or n=="*L" or type(n)=="number", "only read(number) implemented")
-	if cursor > #data then return nil end
+	if cursor >= #data then return nil end -- [N2]
 	if n=="*a" then
 		local cursor2 = cursor
 		_[1] = #data+1
-		return data:sub(cursor2, -1)
+		return data:sub(1+cursor2, -1) -- -1 or #data
 	end
 	if n=="*l" or n=="*L" then
-		local e = string_find(data, "\n", cursor, true)
-		local s = cursor
-		_[1] = (e or #data)+1
-		if n=="*l" then
-			return string_sub(data, s, (e and (e-1) or -1))
-		else
-			return string_sub(data, s, (e and e or -1))
+		local e = string_find(data, "\n", 1+cursor, true)
+		_[1] = (e or #data)
+		if n=="*l" and e then
+			e = e-1
 		end
+		return string_sub(data, 1+cursor, (e and e or -1))
 	end
 	assert(n>=0, "read(n): n must be positive")
-	if cursor > #data then return nil end
+	if cursor >= #data then return nil end -- [N2]
 	n=math_floor(n) -- must use integer [N1]
-	local v = string_sub(data, cursor, cursor+n-1)
+	local v = string_sub(data, 1+cursor, cursor+n)
 	_[1] = cursor+n
 	return v
 end
@@ -78,21 +76,20 @@ function fd_class:seek(whence, offset)
 	local _ = usable(self)
 	whence = whence or "cur"
 	offset = offset or 0
-	local cursor = _[1] or 1
-	-- The default value for whence is "cur", and for offset is 0
+	local cursor = _[1] or 0
+	-- The default value for whence is "cur", and for cursor is 0
 	if whence == "set" then
-		cursor = 1 + offset
+		cursor = offset
 	elseif whence == "cur" then
 		cursor = cursor + offset
 	elseif whence == "end" then
-		cursor = _.size+1
+		cursor = _.size
 	end
-	if not( cursor-1 <= _.size+1) then
+	if not( cursor <= _.size+1) then
 		print("FIXME: raise an out of range error ?")
 	end
-	-- FIXME: assert(cursor-1 <= _.size+1)
-	_.cursor = cursor
-	return cursor -1
+	_[1] = cursor
+	return cursor
 end
 
 -- $ lua -e 'print(io.stdout:seek("cur", 0))'
@@ -106,3 +103,7 @@ end
 return new
 
 -- N1: else cursor will grow more than expected : 0.9 + 0.9 + 0.9 becomes more than 0
+-- N2: for integer the condition are the same
+--	1+cursor > #data  
+--	cursor > #data-1
+--	cursor >= #data
