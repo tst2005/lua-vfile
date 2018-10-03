@@ -98,7 +98,7 @@ end
 
 function fd_class:write(a1, ...)
 	if type(a1)=="number" then
-		error("number argument is not-implemented-yet",2)
+		a1=tostring(a1)
 	end
 	assert(type(a1)=="string", "invalid type argument#1")
 	local wlen = #a1
