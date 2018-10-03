@@ -116,6 +116,7 @@ function fd_class:write(a1, ...)
 			self:write(a)
 		end
 	end
+	-- what is usually returned ?
 end
 
 -- $ lua -e 'print(io.stdout:seek("cur", 0))'
