@@ -21,8 +21,8 @@ end
 function fd_class:init(data)
 	local hex = tostring(self):match(": (0x.*)$")
 	self[internal] = {
-		data=data,	-- data
-		cursor=0,		-- cursor (read at datasub(1+cursor,1+cursor+len) )
+		blocks = {data},	-- blocks
+		cursor=0,		-- cursor (read at data:sub(1+cursor,1+cursor+len) )
 		objecthexvalue = hex,	-- 0xffffffff
 		opened = true,
 		size = #data,
@@ -39,19 +39,29 @@ end
 
 function fd_class:read(n)
 	local _ = usable(self)
-	local data = _.data
+	local data = _.blocks[1]
 	local cursor = _.cursor
-	assert(n=="*a" or n=="*l" or n=="*L" or type(n)=="number", "only read(number) implemented")
+	if type(n)=="number" then
+		assert(n>=0, "negative read not supported")
+	elseif type(n)=="string" then
+		if string_sub(n, 1, 1)=="*" then
+			n=string_sub(n, 2) -- remove the first '*' char
+		end
+		assert(n=="a" or n=="l" or n=="L", "unsupported argument value")
+	else
+		error("invalid argument#1", 2)
+	end
+
 	if cursor >= #data then return nil end -- [N2]
-	if n=="*a" then
+	if n=="a" then
 		local cursor2 = cursor
 		_.cursor = #data+1
 		return data:sub(1+cursor2, -1) -- -1 or #data
 	end
-	if n=="*l" or n=="*L" then
+	if n=="l" or n=="L" then
 		local e = string_find(data, "\n", 1+cursor, true)
 		_.cursor = (e or #data)
-		if n=="*l" and e then
+		if n=="l" and e then
 			e = e-1
 		end
 		return string_sub(data, 1+cursor, (e and e or -1))
@@ -102,11 +112,11 @@ function fd_class:write(a1, ...)
 	assert(type(a1)=="string", "invalid type argument#1")
 	local wlen = #a1
 	local cursor = _.cursor or 0
-	local data = _.data
+	local data = _.blocks[1]
 	local newdata = string_sub(data, 1,1+cursor-1)..a1..string_sub(data, 1+cursor+wlen, -1)
 	local size = math_max(#newdata, _.size)
 	cursor = cursor + wlen
-	_.data = newdata
+	_.blocks[1] = newdata
 	_.cursor = cursor
 	_.size = size
 	if ... then
