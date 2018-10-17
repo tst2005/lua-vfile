@@ -1,5 +1,5 @@
 
-local vfile = require "vfile"
+local vfile = require "vfile.simple"
 
 do
 	local data = "abcde\nz"
